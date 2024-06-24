@@ -19,7 +19,7 @@ Dicho esto, mi objetivo es expandir el multiverso de la "Aventura IA" a otros ti
 
 # Cómo obtener una suscripción a Azure con acceso a Azure Open AI
 - Si no tienes una suscripción a Azure, puedes obtener una gratis en https://azure.microsoft.com/es-es/free/
-- Una vez tengas tu suscripción, puedes activar el servicio de Azure Open AI siguiendo las instrucciones en https://docs.microsoft.com/en-us/azure/cognitive-services/azure-openai-signup
+- Una vez tengas tu suscripción, puedes activar el servicio de Azure Open AI siguiendo las instrucciones en https://learn.microsoft.com/en-us/legal/cognitive-services/openai/limited-access
 
 # Configuración de los recursos
 Se deben configurar las siguientes variables de entorno:
@@ -62,7 +62,7 @@ That being said, my goal is to expand the "Adventure AI" multiverse to other typ
 
 # How to get an Azure subscription with access to Azure Open AI
 - If you don't have an Azure subscription, you can get a free one at https://azure.microsoft.com/en-us/free/
-- Once you have your subscription, you can activate the Azure Open AI service by following the instructions at https://docs.microsoft.com/en-us/azure/cognitive-services/azure-openai-signup
+- Once you have your subscription, you can activate the Azure Open AI service by following the instructions at https://learn.microsoft.com/en-us/legal/cognitive-services/openai/limited-access
 
 # Resource configuration
 The following environment variables must be configured:
