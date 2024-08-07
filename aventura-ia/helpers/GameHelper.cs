@@ -6,6 +6,7 @@ public class Translations {
     public required string Choices { get; set; }
     public required string Difficulty { get; set; }
     public required string Graphics { get; set; }
+    public required string ImageError { get; set; }
 }
 
 public static class GameHelper {
@@ -17,7 +18,8 @@ public static class GameHelper {
         Introduce the number of rounds:
         Introduce the number of choices per round:
         Introduce the desired difficulty (easy, medium, hard, etc):
-        Choose the desired type of graphics (illustration, realistic, 8 bit, etc):";
+        Choose the desired type of graphics (illustration, realistic, 8 bit, etc):
+        The required image could not be generated.";
     }
 
     public static string GetGameDescription(Game game) {

@@ -42,10 +42,18 @@ Game currentGame = new Game
 };
 
 ConsoleHelper.PrintMessage(translations.Loading);
-currentGame.IntroductionImage = await openAIService.GetImageGenerationsAsync(currentGame.Scenario, currentGame.Graphics);
+
+try 
+{
+    currentGame.IntroductionImage = await openAIService.GetImageGenerationsAsync(currentGame.Scenario, currentGame.Graphics);
+    ConsoleHelper.OpenImage(currentGame.IntroductionImage);
+}
+catch {
+    ConsoleHelper.PrintMessage(translations.ImageError);
+}
+
 currentGame.Introduction = await openAIService.GetChatCompletionsAsync(GameHelper.GetGameDescription(currentGame));
 
-ConsoleHelper.OpenImage(currentGame.IntroductionImage);
 ConsoleHelper.PrintMessage(currentGame.Introduction);
 
 while (!currentGame.GameOver)
@@ -61,8 +69,14 @@ while (!currentGame.GameOver)
     
     currentGame.GameOver = GameHelper.YouLose(currentRound.Response);
 
-    currentRound.Image = await openAIService.GetImageGenerationsAsync(currentRound.Response, currentGame.Graphics);
-    ConsoleHelper.OpenImage(currentRound.Image);
+    try
+    {
+        currentRound.Image = await openAIService.GetImageGenerationsAsync(currentRound.Response, currentGame.Graphics);
+        ConsoleHelper.OpenImage(currentRound.Image);
+    }
+    catch {
+        ConsoleHelper.PrintMessage(translations.ImageError);
+    }
 
     ConsoleHelper.Clear();
     if (GameHelper.YouLose(currentRound.Response)) 
