@@ -37,9 +37,12 @@ Game currentGame = new Game
     Scenario = ConsoleHelper.ReadData(translations.Scenario),
     Rounds = Convert.ToUInt16(ConsoleHelper.ReadData(translations.Rounds)),
     Choices = Convert.ToUInt16(ConsoleHelper.ReadData(translations.Choices)),
+    Hints = Convert.ToUInt16(ConsoleHelper.ReadData(translations.Hints)),
     Difficulty = ConsoleHelper.ReadData(translations.Difficulty),
     Graphics = ConsoleHelper.ReadData(translations.Graphics),
 };
+
+currentGame.RemainingHints = currentGame.Hints;
 
 ConsoleHelper.PrintMessage(translations.Loading);
 
@@ -52,20 +55,46 @@ catch {
     ConsoleHelper.PrintMessage(translations.ImageError);
 }
 
-currentGame.Introduction = await openAIService.GetChatCompletionsAsync(GameHelper.GetGameDescription(currentGame));
+string response = await openAIService.GetChatCompletionsAsync(GameHelper.GetGameDescription(currentGame));
+currentGame.Introduction = GameHelper.getRound(response);
+string currentHint = GameHelper.getHint(response);
 
 ConsoleHelper.PrintMessage(currentGame.Introduction);
 
 while (!currentGame.GameOver)
 {
     RoundDetails currentRound = new RoundDetails();
-    // Get the user's choice
-    currentRound.Choice = ConsoleHelper.ReadData(string.Empty);
+    currentRound.Hint = currentHint;
+
+    if (currentGame.RemainingHints > 0)
+    {
+        string? hintChoice = ConsoleHelper.ReadData(translations.HintMessage);
+        if (hintChoice == "4")
+        {
+            ConsoleHelper.PrintMessage(currentHint);
+            currentGame.RemainingHints--;
+
+            // Get the user's choice
+            currentRound.Choice = ConsoleHelper.ReadData(string.Empty);
+        }
+        else {
+            currentRound.Choice = hintChoice;
+        }
+    }
+    else {
+        ConsoleHelper.PrintMessage(translations.NoHints);
+
+        // Get the user's choice
+        currentRound.Choice = ConsoleHelper.ReadData(string.Empty);
+    }
 
     ConsoleHelper.Clear();
     ConsoleHelper.PrintMessage(translations.Loading);
 
-    currentRound.Response = await openAIService.GetChatCompletionsAsync(currentRound.Choice);
+    response = await openAIService.GetChatCompletionsAsync(currentRound.Choice);
+
+    currentRound.Response = GameHelper.getRound(response);
+    currentHint = GameHelper.getHint(response);
     
     currentGame.GameOver = GameHelper.YouLose(currentRound.Response);
 

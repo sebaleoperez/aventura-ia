@@ -57,9 +57,12 @@ public class OpenAIService {
             Scenario = translations[2],
             Rounds = translations[3],
             Choices = translations[4],
-            Difficulty = translations[5],
-            Graphics = translations[6],
-            ImageError = translations[7]
+            Hints = translations[5],
+            Difficulty = translations[6],
+            Graphics = translations[7],
+            ImageError = translations[8],
+            HintMessage = translations[9],
+            NoHints = translations[10]
         };
     }
 }

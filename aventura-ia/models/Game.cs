@@ -10,6 +10,8 @@ public class Game
     public Uri? IntroductionImage { get; set; }
     public bool GameOver { get; set; } = false;
     public uint CurrentRound { get; set; } = 0;
+    public uint Hints { get; set; }
+    public uint RemainingHints { get; set; }
 
     public List<RoundDetails> RoundDetails { get; init; } = new();
 }
@@ -19,4 +21,6 @@ public class RoundDetails
     public string? Choice { get; set; }
     public string? Response { get; set; }
     public Uri? Image { get; set; }
+
+    public string? Hint { get; set; }
 }

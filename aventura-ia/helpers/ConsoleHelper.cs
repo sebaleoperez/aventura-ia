@@ -20,7 +20,7 @@ public class ConsoleHelper {
     }
     public static string? ReadData(string message)
     {
-        Console.Write(message);
+        Console.WriteLine(message);
         string? data = Console.ReadLine();
         Console.WriteLine();
         return data;
