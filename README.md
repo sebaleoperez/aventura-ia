@@ -13,7 +13,7 @@ Principalmente porque es un proyecto de prueba y porque es más sencillo de impl
 Dicho esto, mi objetivo es expandir el multiverso de la "Aventura IA" a otros tipos de aplicaciones, como aplicaciones web, aplicaciones móviles, etc. Todo por supuesto desarrollado en .NET.
 
 # Requerimientos
-- .NET 8.0 instalado
+- .NET 9.0 instalado
 - Una suscripción a Azure con acceso a Azure Open AI (ver debajo)
 - Deployments en esta suscripcion de un modelo generativo de texto como GPT y un modelo generativo de imagen como DALL-E
 
@@ -23,12 +23,12 @@ Dicho esto, mi objetivo es expandir el multiverso de la "Aventura IA" a otros ti
 
 # Configuración de los recursos
 Se deben configurar las siguientes variables de entorno:
-"AZURE_OPENAI_ENDPOINT": La URL de tu recurso de Azure Open AI
-"AZURE_OPENAI_API_KEY": La clave de acceso a tu recurso de Azure Open AI
-"DEPLOYMENT_SLOT_NAME": El nombre del slot de deployment de tu modelo generativo de texto
-"DALLE_SLOT_NAME": El nombre del slot de deployment de tu modelo generativo de imagen
-"MAX_TOKENS": El número máximo de tokens que se pueden generar en una respuesta 
-"TEMPERATURE": Controla la aleatoriedad de las respuestas generadas (0.0 - 1.0)
+"AzureOpenAiEndpoint": La URL de tu recurso de Azure Open AI
+"AzureOpenAiApiKey": La clave de acceso a tu recurso de Azure Open AI
+"AzureOpenAiDeploymentId": El nombre del slot de deployment de tu modelo generativo de texto
+"DalleEndpoint": La URL de tu recurso de Azure Open AI donde se implementó Dall-e (puede ser el mismo)
+"DalleApiKey": La clave de acceso a tu recurso de Azure Open AI donde se implementó Dall-e (puede ser el mismo)
+"DalleDeploymentId": Nombre del deployment de Dall-e a utilizar
 
 # Consideraciones
 - Este proyecto es un experimento por lo tanto el código puede que no sea el más eficiente o el más elegante. Si tienes sugerencias de mejora, puedes contribuir :)
@@ -56,7 +56,7 @@ Mainly because it's a test project and because it's easier to implement and test
 That being said, my goal is to expand the "Adventure AI" multiverse to other types of applications, such as web applications, mobile applications, etc. All, of course, developed in .NET.
 
 # Requirements
-- .NET 8.0 installed
+- .NET 9.0 installed
 - An Azure subscription with access to Azure Open AI (see below)
 - Deployments in this subscription of a text generative model like GPT and an image generative model like DALL-E
 
@@ -66,12 +66,12 @@ That being said, my goal is to expand the "Adventure AI" multiverse to other typ
 
 # Resource configuration
 The following environment variables must be configured:
-"AZURE_OPENAI_ENDPOINT": The URL of your Azure Open AI resource
-"AZURE_OPENAI_API_KEY": The access key to your Azure Open AI resource
-"DEPLOYMENT_SLOT_NAME": The name of the deployment slot for your text generative model
-"DALLE_SLOT_NAME": The name of the deployment slot for your image generative model
-"MAX_TOKENS": The maximum number of tokens that can be generated in a response
-"TEMPERATURE": Controls the randomness of the generated responses (0.0 - 1.0)
+"AzureOpenAiEndpoint": The URL of your Azure Open AI resource
+"AzureOpenAiApiKey": The access key to your Azure Open AI resource
+"AzureOpenAiDeploymentId": The name of the deployment slot for your text generative model
+"DalleEndpoint": The URL of your Azure Open AI resource for Dall-e
+"DalleApiKey": The access key to your Azure Open AI resource for Dall-e
+"DalleDeploymentId": The name of the deployment slot for your Dall-e
 
 # Considerations
 - This project is an experiment, so the code may not be the most efficient or elegant. If you have suggestions for improvement, you can contribute :)

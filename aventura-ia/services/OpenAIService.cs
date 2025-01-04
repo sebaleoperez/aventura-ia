@@ -1,48 +1,59 @@
 using Azure;
 using Azure.AI.OpenAI;
+using Microsoft.Extensions.Configuration;
+using OpenAI.Chat;
+using OpenAI.Images;
 
 public class OpenAIService {
-    OpenAIClient _client;
-    ChatCompletionsOptions _options;
+    AzureOpenAIClient _client;
+    AzureOpenAIClient _dalleClient;
+    ChatClient _chatClient;
+    ImageClient _imageClient;
+    List<ChatMessage> _messages = new List<ChatMessage>();
     public OpenAIService() {
+        IConfigurationRoot config = new ConfigurationBuilder()
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.json")
+        .AddEnvironmentVariables()
+        .Build();
+
+        Settings? settings = config.GetRequiredSection("Settings").Get<Settings>();
         #pragma warning disable CS8604 // Possible null reference argument.
-            _client = new OpenAIClient(
-                new Uri(Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT")),
-                new AzureKeyCredential(Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY"))
+            _client = new AzureOpenAIClient(
+                new Uri(settings?.AzureOpenAiEndpoint),
+                new AzureKeyCredential(settings?.AzureOpenAiApiKey)
             );
-            // Send the first message to the API
-            _options = new ChatCompletionsOptions()
-            {
-                MaxTokens = int.Parse(Environment.GetEnvironmentVariable("MAX_TOKENS")),
-                Temperature = float.Parse(Environment.GetEnvironmentVariable("TEMPERATURE")),
-                NucleusSamplingFactor = (float)0.95,
-                FrequencyPenalty = 0,
-                PresencePenalty = 0, 
-                DeploymentName = Environment.GetEnvironmentVariable("DEPLOYMENT_SLOT_NAME")
-            };
+            _dalleClient = new AzureOpenAIClient(
+                new Uri(settings?.DalleEndpoint),
+                new AzureKeyCredential(settings?.DalleApiKey)
+            );
+
+            _chatClient = _client.GetChatClient(settings?.AzureOpenAiDeploymentId);
+            _imageClient = _dalleClient.GetImageClient(settings?.DalleDeploymentId);
         #pragma warning restore CS8604 // Possible null reference argument.
     }
 
     public async Task<Uri> GetImageGenerationsAsync(string? scenario, string? graphics) {
         // Get image generation for the first part of the game
-        Response<ImageGenerations> imageGenerations = await _client.GetImageGenerationsAsync(
-            new ImageGenerationOptions()
-            {
-                Prompt = "Give me an image of: " + scenario + ". I want the image to follow this type: " + graphics,
-                Size = ImageSize.Size1024x1024,
-                DeploymentName = Environment.GetEnvironmentVariable("DALLE_SLOT_NAME"),
-            });
+        string prompt = "Give me an image of: " + scenario + ". I want the image to follow this type: " + graphics;
+        ImageGenerationOptions options = new()
+        {
+            Quality = GeneratedImageQuality.High,
+            Size = GeneratedImageSize.W1024xH1024,
+            Style = GeneratedImageStyle.Vivid,
+            ResponseFormat = GeneratedImageFormat.Uri
+        };
+        GeneratedImage image = await _imageClient.GenerateImageAsync(prompt, options);
 
         // Image Generations responses provide URLs you can use to retrieve requested images
-        return imageGenerations.Value.Data[0].Url;
+        return image.ImageUri;
     }
 
     public async Task<string> GetChatCompletionsAsync(string? input) {
-        _options.Messages.Add(new ChatRequestUserMessage(input));
-        Response<ChatCompletions> responseWithoutStream = await _client.GetChatCompletionsAsync(_options);
-        ChatCompletions response = responseWithoutStream.Value;
-        string responseText = response.Choices[0].Message.Content;
-        _options.Messages.Add(new ChatRequestAssistantMessage(responseText));
+        _messages.Add(new UserChatMessage(input));
+        ChatCompletion completion = await _chatClient.CompleteChatAsync(_messages);
+        string responseText = completion.Content[0].Text;
+        _messages.Add(new AssistantChatMessage(responseText));
         return responseText;
     }
 
