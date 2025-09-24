@@ -1,0 +1,38 @@
+{
+  "rounds": {
+    "1 ronda - Juego rápido": 1,
+    "3 rondas - Juego estándar": 3,
+    "5 rondas - Juego largo": 5,
+    "7 rondas - Aventura épica": 7,
+    "✏️ Otro - Personalizar": "custom"
+  },
+  "choices": {
+    "2 opciones - Fácil": 2,
+    "3 opciones - Normal": 3,
+    "4 opciones - Difícil": 4,
+    "5 opciones - Experto": 5,
+    "✏️ Otro - Personalizar": "custom"
+  },
+  "hints": {
+    "Sin pistas - Modo hardcore": 0,
+    "1 pista - Mínima ayuda": 1,
+    "2 pistas - Ayuda moderada": 2,
+    "3 pistas - Ayuda completa": 3,
+    "✏️ Otro - Personalizar": "custom"
+  },
+  "difficulty": {
+    "Fácil - Opciones obvias": "easy",
+    "Normal - Balance perfecto": "medium",
+    "Difícil - Desafío real": "hard",
+    "Extremo - Solo para expertos": "extreme",
+    "✏️ Otro - Personalizar": "custom"
+  },
+  "graphics": {
+    "🎨 Ilustración - Estilo artístico": "illustration",
+    "📷 Realista - Fotografía": "realistic",
+    "🕹️ Retro - Pixel Art 8-bit": "8 bit pixel art",
+    "🖼️ Anime - Estilo japonés": "anime style",
+    "🌟 Fantasy - Arte fantástico": "fantasy art",
+    "✏️ Otro - Personalizar": "custom"
+  }
+}

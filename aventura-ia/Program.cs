@@ -1,6 +1,74 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+// Cargar configuración de menús
+var menuConfig = MenuConfig.LoadFromFile("config/menu-options.json");
+
+static ushort SelectRounds(string prompt, MenuConfig config)
+{
+    return ConsoleHelper.SelectFromMenuWithCustom<ushort>(
+        prompt, 
+        config.Rounds, 
+        "Ingresa el número de rondas personalizado (1-50):",
+        input => {
+            if (ushort.TryParse(input, out ushort result) && result > 0 && result <= 50)
+                return result;
+            ConsoleHelper.PrintMessage("Valor inválido. Usando 5 rondas por defecto.");
+            return 5;
+        }
+    );
+}
+
+static ushort SelectChoices(string prompt, MenuConfig config)
+{
+    return ConsoleHelper.SelectFromMenuWithCustom<ushort>(
+        prompt, 
+        config.Choices, 
+        "Ingresa el número de opciones por ronda (2-10):",
+        input => {
+            if (ushort.TryParse(input, out ushort result) && result >= 2 && result <= 10)
+                return result;
+            ConsoleHelper.PrintMessage("Valor inválido. Usando 3 opciones por defecto.");
+            return 3;
+        }
+    );
+}
+
+static ushort SelectHints(string prompt, MenuConfig config)
+{
+    return ConsoleHelper.SelectFromMenuWithCustom<ushort>(
+        prompt, 
+        config.Hints, 
+        "Ingresa el número de pistas disponibles (0-20):",
+        input => {
+            if (ushort.TryParse(input, out ushort result) && result <= 20)
+                return result;
+            ConsoleHelper.PrintMessage("Valor inválido. Usando 2 pistas por defecto.");
+            return 2;
+        }
+    );
+}
+
+static string SelectDifficulty(string prompt, MenuConfig config)
+{
+    return ConsoleHelper.SelectFromMenuWithCustom<string>(
+        prompt, 
+        config.Difficulty, 
+        "Describe la dificultad personalizada (ej: muy fácil, imposible, etc.):",
+        input => string.IsNullOrWhiteSpace(input) ? "medium" : input.Trim()
+    );
+}
+
+static string SelectGraphics(string prompt, MenuConfig config)
+{
+    return ConsoleHelper.SelectFromMenuWithCustom<string>(
+        prompt, 
+        config.Graphics, 
+        "Describe el estilo de gráficos personalizado (ej: cyberpunk, medieval, etc.):",
+        input => string.IsNullOrWhiteSpace(input) ? "illustration" : input.Trim()
+    );
+}
+
 // Set up DI
 var serviceProvider = new ServiceCollection()
     .AddSingleton<OpenAIService>()
@@ -52,11 +120,11 @@ Game currentGame = new Game
 {
     Language = language,
     Scenario = ConsoleHelper.ReadData(translations.Scenario),
-    Rounds = Convert.ToUInt16(ConsoleHelper.ReadData(translations.Rounds)),
-    Choices = Convert.ToUInt16(ConsoleHelper.ReadData(translations.Choices)),
-    Hints = Convert.ToUInt16(ConsoleHelper.ReadData(translations.Hints)),
-    Difficulty = ConsoleHelper.ReadData(translations.Difficulty),
-    Graphics = ConsoleHelper.ReadData(translations.Graphics),
+    Rounds = SelectRounds(translations.Rounds, menuConfig),
+    Choices = SelectChoices(translations.Choices, menuConfig),
+    Hints = SelectHints(translations.Hints, menuConfig),
+    Difficulty = SelectDifficulty(translations.Difficulty, menuConfig),
+    Graphics = SelectGraphics(translations.Graphics, menuConfig),
 };
 
 currentGame.RemainingHints = currentGame.Hints;
