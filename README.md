@@ -16,32 +16,119 @@ Dicho esto, mi objetivo es expandir el multiverso de la "Aventura IA" a otros ti
 - .NET 9.0 instalado
 - Una suscripción a Azure con acceso a Azure Open AI (ver debajo)
 - Deployments en esta suscripcion de un modelo generativo de texto como GPT y un modelo generativo de imagen como DALL-E
+- **NUEVO**: Opcionalmente, acceso a Sora para generación de videos (ver configuración)
 
 # Cómo obtener una suscripción a Azure con acceso a Azure Open AI
 - Si no tienes una suscripción a Azure, puedes obtener una gratis en https://azure.microsoft.com/es-es/free/
 - Una vez tengas tu suscripción, puedes activar el servicio de Azure Open AI siguiendo las instrucciones en https://learn.microsoft.com/en-us/legal/cognitive-services/openai/limited-access
 
 # Configuración de los recursos
-Se deben configurar las siguientes variables de entorno:
-"AzureOpenAiEndpoint": La URL de tu recurso de Azure Open AI
-"AzureOpenAiApiKey": La clave de acceso a tu recurso de Azure Open AI
-"AzureOpenAiDeploymentId": El nombre del slot de deployment de tu modelo generativo de texto
-"DalleEndpoint": La URL de tu recurso de Azure Open AI donde se implementó Dall-e (puede ser el mismo)
-"DalleApiKey": La clave de acceso a tu recurso de Azure Open AI donde se implementó Dall-e (puede ser el mismo)
-"DalleDeploymentId": Nombre del deployment de Dall-e a utilizar
+
+## Configuración con archivo JSON (Recomendado)
+El proyecto ahora utiliza un archivo `appsettings.json` para la configuración. Crea el archivo en `aventura-ia/appsettings.json`:
+
+```json
+{
+  "Settings": {
+    "AzureOpenAiEndpoint": "https://tu-recurso.openai.azure.com/",
+    "AzureOpenAiApiKey": "tu-clave-de-api",
+    "AzureOpenAiDeploymentId": "tu-deployment-gpt",
+    "DalleEndpoint": "https://tu-recurso-dalle.openai.azure.com/",
+    "DalleApiKey": "tu-clave-dalle",
+    "DalleDeploymentId": "tu-deployment-dalle",
+    "SoraEndpoint": "https://tu-recurso-sora.cognitiveservices.azure.com/",
+    "SoraApiKey": "tu-clave-sora",
+    "SoraDeploymentId": "sora"
+  }
+}
+```
+
+## Variables de entorno (Alternativa)
+También puedes usar variables de entorno:
+- "AzureOpenAiEndpoint": La URL de tu recurso de Azure Open AI
+- "AzureOpenAiApiKey": La clave de acceso a tu recurso de Azure Open AI
+- "AzureOpenAiDeploymentId": El nombre del deployment de tu modelo generativo de texto
+- "DalleEndpoint": La URL de tu recurso de Azure Open AI donde se implementó DALL-E
+- "DalleApiKey": La clave de acceso a tu recurso de Azure Open AI donde se implementó DALL-E
+- "DalleDeploymentId": Nombre del deployment de DALL-E a utilizar
+- **NUEVO** "SoraEndpoint": La URL de tu recurso de Sora
+- **NUEVO** "SoraApiKey": La clave de acceso a tu recurso de Sora
+- **NUEVO** "SoraDeploymentId": Nombre del deployment de Sora
+
+## 🎬 Nueva funcionalidad: Generación de videos con Sora
+
+Ahora puedes generar videos cinematográficos del escenario inicial usando Sora:
+
+```bash
+# Ejecutar con generación de video
+dotnet run spanish --video
+
+# Solo texto e imágenes (modo tradicional)
+dotnet run spanish
+```
+
+### Configuración de Sora
+Para usar videos, configura las credenciales de Sora en tu `appsettings.json`. Sora está disponible en Azure OpenAI en modo preview.
+
+## Ejemplo de salida con video
+```
+🎬 Modo de generación de video activado!
+Selected Language: spanish
+Bienvenido a la Aventura IA
+
+📝 Prompt del video: Create a cinematic video scene of: En el espacio cerca de Marte...
+🔄 Enviando solicitud a Sora...
+🔗 URL: https://tu-recurso.cognitiveservices.azure.com/openai/v1/video/generations/jobs?api-version=preview
+✅ Job de video enviado exitosamente!
+🎬 Job ID: job_abc123...
+⏳ El video se está procesando. Consulta el estado del job para obtener el resultado.
+```
 
 # Consideraciones
 - Este proyecto es un experimento por lo tanto el código puede que no sea el más eficiente o el más elegante. Si tienes sugerencias de mejora, puedes contribuir :)
-- El codigo no realiza todas las validaciones que debería, por lo que puede que no funcione correctamente si no se cumplen ciertas condiciones. 
+- El codigo no realiza todas las validaciones que debería, por lo que puede que no funcione correctamente si no se cumplen ciertas condiciones.
+- **Importante**: El archivo `appsettings.json` está en `.gitignore` para proteger tus credenciales. Usa `appsettings.example.json` como plantilla.
+- La generación de videos con Sora puede tomar varios minutos y tiene costos asociados. 
+
+# Funcionalidades disponibles
+- ✅ **Juego de aventuras por texto** con IA generativa
+- ✅ **Generación de imágenes** con DALL-E para cada escena
+- ✅ **Multiidioma** con traducciones automáticas
+- ✅ **Sistema de pistas** inteligente
+- ✅ **Generación de videos** con Sora (usando `--video`)
+- ✅ **Configuración por JSON** y variables de entorno
+
+# Uso
+
+## Modo básico (texto + imágenes)
+```bash
+cd aventura-ia
+dotnet run spanish
+```
+
+## Modo con videos cinematográficos 🎬
+```bash
+cd aventura-ia
+dotnet run spanish --video
+```
+
+## Idiomas soportados
+- `spanish` - Español
+- `english` - Inglés  
+- `french` - Francés
+- O cualquier idioma que especifiques
 
 # Roadmap / Próximos pasos
 En esta sección dejaré ideas que tengo para próximas versiones:
 
+- ✅ ~~Integración con Sora para videos~~ **¡Completado!**
 - Probar la libreria OpenAI de C# (https://www.nuget.org/packages/OpenAI/)
 - Portar la aplicación a ASP.NET y Blazor para que pueda ser ejecutada en un navegador
 - Crear una versión de la aplicación para Android, Windows y iOS con .NET Maui
 - Que el escenario pueda escanearse directo de una imagen
 - Lectura de los relatos en voz alta
+- Sistema de polling para verificar el estado de los videos de Sora
+- Cacheo local de videos generados
 
 # English version
 This repository is an "experiment" with which I want to achieve:
@@ -59,31 +146,105 @@ That being said, my goal is to expand the "Adventure AI" multiverse to other typ
 - .NET 9.0 installed
 - An Azure subscription with access to Azure Open AI (see below)
 - Deployments in this subscription of a text generative model like GPT and an image generative model like DALL-E
+- **NEW**: Optionally, access to Sora for video generation (see configuration)
 
 # How to get an Azure subscription with access to Azure Open AI
 - If you don't have an Azure subscription, you can get a free one at https://azure.microsoft.com/en-us/free/
 - Once you have your subscription, you can activate the Azure Open AI service by following the instructions at https://learn.microsoft.com/en-us/legal/cognitive-services/openai/limited-access
 
 # Resource configuration
-The following environment variables must be configured:
-"AzureOpenAiEndpoint": The URL of your Azure Open AI resource
-"AzureOpenAiApiKey": The access key to your Azure Open AI resource
-"AzureOpenAiDeploymentId": The name of the deployment slot for your text generative model
-"DalleEndpoint": The URL of your Azure Open AI resource for Dall-e
-"DalleApiKey": The access key to your Azure Open AI resource for Dall-e
-"DalleDeploymentId": The name of the deployment slot for your Dall-e
+
+## JSON Configuration (Recommended)
+The project now uses an `appsettings.json` file for configuration. Create the file in `aventura-ia/appsettings.json`:
+
+```json
+{
+  "Settings": {
+    "AzureOpenAiEndpoint": "https://your-resource.openai.azure.com/",
+    "AzureOpenAiApiKey": "your-api-key",
+    "AzureOpenAiDeploymentId": "your-gpt-deployment",
+    "DalleEndpoint": "https://your-dalle-resource.openai.azure.com/",
+    "DalleApiKey": "your-dalle-key",
+    "DalleDeploymentId": "your-dalle-deployment",
+    "SoraEndpoint": "https://your-sora-resource.cognitiveservices.azure.com/",
+    "SoraApiKey": "your-sora-key",
+    "SoraDeploymentId": "sora"
+  }
+}
+```
+
+## Environment Variables (Alternative)
+You can also use environment variables:
+- "AzureOpenAiEndpoint": The URL of your Azure Open AI resource
+- "AzureOpenAiApiKey": The access key to your Azure Open AI resource
+- "AzureOpenAiDeploymentId": The name of the deployment slot for your text generative model
+- "DalleEndpoint": The URL of your Azure Open AI resource for DALL-E
+- "DalleApiKey": The access key to your Azure Open AI resource for DALL-E
+- "DalleDeploymentId": The name of the deployment slot for your DALL-E
+- **NEW** "SoraEndpoint": The URL of your Sora resource
+- **NEW** "SoraApiKey": The access key to your Sora resource
+- **NEW** "SoraDeploymentId": Name of the Sora deployment
+
+## 🎬 New Feature: Video Generation with Sora
+
+You can now generate cinematic videos of the initial scenario using Sora:
+
+```bash
+# Run with video generation
+dotnet run english --video
+
+# Text and images only (traditional mode)
+dotnet run english
+```
+
+### Sora Configuration
+To use videos, configure Sora credentials in your `appsettings.json`. Sora is available in Azure OpenAI in preview mode.
 
 # Considerations
 - This project is an experiment, so the code may not be the most efficient or elegant. If you have suggestions for improvement, you can contribute :)
 - The code does not perform all the validations it should, so it may not work correctly if certain conditions are not met.
+- **Important**: The `appsettings.json` file is in `.gitignore` to protect your credentials. Use `appsettings.example.json` as a template.
+- Video generation with Sora can take several minutes and has associated costs.
+
+# Available Features
+- ✅ **Text-based adventure game** with generative AI
+- ✅ **Image generation** with DALL-E for each scene
+- ✅ **Multi-language** with automatic translations
+- ✅ **Intelligent hint system**
+- ✅ **Video generation** with Sora (using `--video`)
+- ✅ **JSON configuration** and environment variables
+
+# Usage
+
+## Basic mode (text + images)
+```bash
+cd aventura-ia
+dotnet run english
+```
+
+## Cinematic video mode 🎬
+```bash
+cd aventura-ia
+dotnet run english --video
+```
+
+## Supported Languages
+- `spanish` - Spanish
+- `english` - English  
+- `french` - French
+- Or any language you specify
 
 # Roadmap / Next steps
 In this section, I will leave ideas I have for future versions:
+
+- ✅ ~~Sora integration for videos~~ **Completed!**
 - Test the OpenAI C# library (https://www.nuget.org/packages/OpenAI/)
 - Port the application to ASP.NET and Blazor so that it can be run in a browser
 - Create a version of the application for Android, Windows, and iOS with .NET Maui
 - Allow the scenario to be scanned directly from an image
 - Text-to-speech reading of the stories
+- Polling system to check Sora video status
+- Local caching of generated videos
 
 
 

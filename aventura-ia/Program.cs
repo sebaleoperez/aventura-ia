@@ -11,15 +11,31 @@ var openAIService = serviceProvider.GetService<OpenAIService>();
 
 // Language to use for the game
 string? language;
+bool generateVideo = false;
 
 // Check if any arguments were passed
 if (args.Length > 0)
 {
-    // Access the first argument
-    language = args[0];
-
-    // Print the language
-    ConsoleHelper.PrintMessage($"Selected Language: {language}");
+    // Check for --video parameter
+    if (args.Contains("--video"))
+    {
+        generateVideo = true;
+        ConsoleHelper.PrintMessage("🎬 Modo de generación de video activado!");
+    }
+    
+    // Get language (first non-flag argument)
+    language = args.FirstOrDefault(arg => !arg.StartsWith("--"));
+    
+    if (!string.IsNullOrEmpty(language))
+    {
+        // Print the language
+        ConsoleHelper.PrintMessage($"Selected Language: {language}");
+    }
+    else
+    {
+        // Ask the user to input the language
+        language = ConsoleHelper.ReadData("Insert language:");
+    }
 }
 else
 {
@@ -46,6 +62,23 @@ Game currentGame = new Game
 currentGame.RemainingHints = currentGame.Hints;
 
 ConsoleHelper.PrintMessage(translations.Loading);
+
+// Generar video si se especificó el parámetro --video
+if (generateVideo && !string.IsNullOrEmpty(currentGame.Scenario))
+{
+    try 
+    {
+        string videoUrl = await openAIService.GenerateVideoAsync(currentGame.Scenario);
+        if (!string.IsNullOrEmpty(videoUrl))
+        {
+            ConsoleHelper.PrintMessage($"🎥 Video del escenario disponible en: {videoUrl}");
+        }
+    }
+    catch (Exception ex)
+    {
+        ConsoleHelper.PrintMessage($"❌ Error al generar video: {ex.Message}");
+    }
+}
 
 try 
 {
