@@ -70,6 +70,56 @@ dotnet run spanish
 ### Configuración de Sora
 Para usar videos, configura las credenciales de Sora en tu `appsettings.json`. Sora está disponible en Azure OpenAI en modo preview.
 
+## 🎮 Nueva Interfaz Interactiva
+
+El juego ahora cuenta con una interfaz de menús completamente interactiva:
+
+### Navegación con Teclado
+- **↑↓** - Navegar entre opciones
+- **Enter** - Seleccionar opción
+- **Escape** - Salir del juego
+
+### Menús Disponibles
+1. **Número de rondas**: Desde juegos rápidos (1 ronda) hasta aventuras épicas (10+ rondas)
+2. **Opciones por ronda**: De 2 opciones (fácil) hasta 5+ opciones (experto)
+3. **Sistema de pistas**: Desde modo hardcore (sin pistas) hasta ayuda completa
+4. **Nivel de dificultad**: Desde opciones obvias hasta desafíos extremos
+5. **Estilo de gráficos**: Múltiples estilos con emojis descriptivos
+
+### Personalización Avanzada
+Cada menú incluye una opción **"✏️ Otro - Personalizar"** que permite:
+- Ingresar valores personalizados en tiempo real
+- Validación automática de entradas
+- Valores por defecto seguros en caso de error
+
+## 🔧 Configuración de Menús
+
+Las opciones de los menús se pueden personalizar editando `aventura-ia/config/menu-options.json`:
+
+```json
+{
+  "rounds": {
+    "1 ronda - Juego rápido": 1,
+    "3 rondas - Juego estándar": 3,
+    "5 rondas - Juego largo": 5,
+    "7 rondas - Aventura épica": 7,
+    "✏️ Otro - Personalizar": "custom"
+  },
+  "graphics": {
+    "🎨 Ilustración - Estilo artístico": "illustration",
+    "📷 Realista - Fotografía": "realistic",
+    "🕹️ Retro - Pixel Art 8-bit": "8 bit pixel art",
+    "🖼️ Anime - Estilo japonés": "anime style",
+    "🌟 Fantasy - Arte fantástico": "fantasy art",
+    "✏️ Otro - Personalizar": "custom"
+  }
+}
+```
+
+**💡 Tip**: Puedes agregar tus propias opciones editando este archivo. El juego las detectará automáticamente.
+
+**📚 Documentación completa**: Ver `aventura-ia/config/README-CONFIG.md` para instrucciones detalladas.
+
 ## Ejemplo de salida con video
 ```
 🎬 Modo de generación de video activado!
@@ -97,6 +147,8 @@ Bienvenido a la Aventura IA
 - ✅ **Sistema de pistas** inteligente
 - ✅ **Generación de videos** con Sora (usando `--video`)
 - ✅ **Configuración por JSON** y variables de entorno
+- ✅ **Interfaz de menús interactiva** con navegación por flechas
+- ✅ **Opciones personalizables** editables desde archivos de configuración
 
 # Uso
 
@@ -122,6 +174,8 @@ dotnet run spanish --video
 En esta sección dejaré ideas que tengo para próximas versiones:
 
 - ✅ ~~Integración con Sora para videos~~ **¡Completado!**
+- ✅ ~~Interfaz de menús interactiva~~ **¡Completado!**
+- ✅ ~~Configuración personalizable de opciones~~ **¡Completado!**
 - Probar la libreria OpenAI de C# (https://www.nuget.org/packages/OpenAI/)
 - Portar la aplicación a ASP.NET y Blazor para que pueda ser ejecutada en un navegador
 - Crear una versión de la aplicación para Android, Windows y iOS con .NET Maui
@@ -129,6 +183,9 @@ En esta sección dejaré ideas que tengo para próximas versiones:
 - Lectura de los relatos en voz alta
 - Sistema de polling para verificar el estado de los videos de Sora
 - Cacheo local de videos generados
+- Temas personalizables para la interfaz de consola
+- Modo multijugador local
+- Sistema de logros y estadísticas
 
 # English version
 This repository is an "experiment" with which I want to achieve:
@@ -200,6 +257,56 @@ dotnet run english
 ### Sora Configuration
 To use videos, configure Sora credentials in your `appsettings.json`. Sora is available in Azure OpenAI in preview mode.
 
+## 🎮 New Interactive Interface
+
+The game now features a completely interactive menu interface:
+
+### Keyboard Navigation
+- **↑↓** - Navigate between options
+- **Enter** - Select option
+- **Escape** - Exit game
+
+### Available Menus
+1. **Number of rounds**: From quick games (1 round) to epic adventures (10+ rounds)
+2. **Options per round**: From 2 options (easy) to 5+ options (expert)
+3. **Hint system**: From hardcore mode (no hints) to complete help
+4. **Difficulty level**: From obvious options to extreme challenges
+5. **Graphics style**: Multiple styles with descriptive emojis
+
+### Advanced Customization
+Each menu includes an **"✏️ Other - Customize"** option that allows:
+- Enter custom values in real time
+- Automatic input validation
+- Safe default values in case of error
+
+## 🔧 Menu Configuration
+
+Menu options can be customized by editing `aventura-ia/config/menu-options.json`:
+
+```json
+{
+  "rounds": {
+    "1 round - Quick game": 1,
+    "3 rounds - Standard game": 3,
+    "5 rounds - Long game": 5,
+    "7 rounds - Epic adventure": 7,
+    "✏️ Other - Customize": "custom"
+  },
+  "graphics": {
+    "🎨 Illustration - Artistic style": "illustration",
+    "📷 Realistic - Photography": "realistic",
+    "🕹️ Retro - Pixel Art 8-bit": "8 bit pixel art",
+    "🖼️ Anime - Japanese style": "anime style",
+    "🌟 Fantasy - Fantasy art": "fantasy art",
+    "✏️ Other - Customize": "custom"
+  }
+}
+```
+
+**💡 Tip**: You can add your own options by editing this file. The game will detect them automatically.
+
+**📚 Full documentation**: See `aventura-ia/config/README-CONFIG.md` for detailed instructions.
+
 # Considerations
 - This project is an experiment, so the code may not be the most efficient or elegant. If you have suggestions for improvement, you can contribute :)
 - The code does not perform all the validations it should, so it may not work correctly if certain conditions are not met.
@@ -213,6 +320,8 @@ To use videos, configure Sora credentials in your `appsettings.json`. Sora is av
 - ✅ **Intelligent hint system**
 - ✅ **Video generation** with Sora (using `--video`)
 - ✅ **JSON configuration** and environment variables
+- ✅ **Interactive menu interface** with arrow key navigation
+- ✅ **Customizable options** editable from configuration files
 
 # Usage
 
@@ -238,6 +347,8 @@ dotnet run english --video
 In this section, I will leave ideas I have for future versions:
 
 - ✅ ~~Sora integration for videos~~ **Completed!**
+- ✅ ~~Interactive menu interface~~ **Completed!**
+- ✅ ~~Customizable menu options~~ **Completed!**
 - Test the OpenAI C# library (https://www.nuget.org/packages/OpenAI/)
 - Port the application to ASP.NET and Blazor so that it can be run in a browser
 - Create a version of the application for Android, Windows, and iOS with .NET Maui
@@ -245,6 +356,9 @@ In this section, I will leave ideas I have for future versions:
 - Text-to-speech reading of the stories
 - Polling system to check Sora video status
 - Local caching of generated videos
+- Customizable themes for console interface
+- Local multiplayer mode
+- Achievement and statistics system
 
 
 
