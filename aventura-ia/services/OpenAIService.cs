@@ -10,10 +10,13 @@ public class OpenAIService : IAiAdventureService {
     readonly Settings _settings;
     readonly AzureOpenAIClient _client;
     readonly ChatClient _chatClient;
+    readonly HttpClient _httpClient;
     ImageClient? _imageClient;
     readonly List<ChatMessage> _messages = new List<ChatMessage>();
 
-    public OpenAIService() {
+    public OpenAIService(HttpClient httpClient) {
+        _httpClient = httpClient;
+
         IConfigurationRoot config = BuildConfiguration();
         _settings = config.GetSection("Settings").Get<Settings>() ?? new Settings();
         _settings.ValidateChat();
@@ -79,15 +82,6 @@ public class OpenAIService : IAiAdventureService {
             ConsoleHelper.PrintMessage($"🎬 Generando video con Sora para el escenario: {scenario}");
             ConsoleHelper.PrintMessage($"📝 Prompt del video: {videoPrompt}");
             
-            // Implementación real de Sora usando HttpClient para llamadas REST API
-            using var httpClient = new HttpClient
-            {
-                Timeout = TimeSpan.FromSeconds(_settings.VideoRequestTimeoutSeconds)
-            };
-            
-            // Configurar headers de autenticación para Azure OpenAI Sora
-            httpClient.DefaultRequestHeaders.Add("api-key", _settings.SoraApiKey);
-            
             // Crear el payload para la API de Sora según el formato de Azure OpenAI
             var requestBody = new {
                 model = _settings.SoraDeploymentId,
@@ -106,12 +100,19 @@ public class OpenAIService : IAiAdventureService {
             string apiUrl = $"{_settings.SoraEndpoint.TrimEnd('/')}/openai/v1/video/generations/jobs?api-version=preview";
             
             ConsoleHelper.PrintMessage("Enviando solicitud a Sora...");
-            
+
             // Enviar la solicitud
-            var response = await httpClient.PostAsync(apiUrl, content);
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(_settings.VideoRequestTimeoutSeconds));
+            using var request = new HttpRequestMessage(HttpMethod.Post, apiUrl)
+            {
+                Content = content
+            };
+            request.Headers.Add("api-key", _settings.SoraApiKey);
+
+            using HttpResponseMessage response = await _httpClient.SendAsync(request, timeout.Token);
             
             if (response.IsSuccessStatusCode) {
-                string responseContent = await response.Content.ReadAsStringAsync();
+                string responseContent = await response.Content.ReadAsStringAsync(timeout.Token);
                 var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
                 
                 ConsoleHelper.PrintMessage($"✅ Job de video enviado exitosamente!");
@@ -128,13 +129,13 @@ public class OpenAIService : IAiAdventureService {
                         return jobId;
                     }
 
-                    return await WaitForVideoJobAsync(httpClient, jobId);
+                    return await WaitForVideoJobAsync(jobId);
                 }
                 
                 ConsoleHelper.PrintMessage($"⚠️ Job creado pero no se pudo extraer el ID");
                 return responseContent;
             } else {
-                string errorContent = await response.Content.ReadAsStringAsync();
+                string errorContent = await response.Content.ReadAsStringAsync(timeout.Token);
                 ConsoleHelper.PrintMessage($"❌ Error en la API de Sora: {response.StatusCode}");
                 ConsoleHelper.PrintMessage($"Detalles: {errorContent}");
                 return string.Empty;
@@ -159,7 +160,7 @@ public class OpenAIService : IAiAdventureService {
         }
     }
 
-    private async Task<string> WaitForVideoJobAsync(HttpClient httpClient, string jobId)
+    private async Task<string> WaitForVideoJobAsync(string jobId)
     {
         string statusUrl = $"{_settings.SoraEndpoint.TrimEnd('/')}/openai/v1/video/generations/jobs/{jobId}?api-version=preview";
         TimeSpan pollingInterval = TimeSpan.FromSeconds(_settings.VideoPollingIntervalSeconds);
@@ -172,8 +173,12 @@ public class OpenAIService : IAiAdventureService {
         {
             await Task.Delay(pollingInterval);
 
-            using HttpResponseMessage response = await httpClient.GetAsync(statusUrl);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            using var requestTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(_settings.VideoRequestTimeoutSeconds));
+            using var request = new HttpRequestMessage(HttpMethod.Get, statusUrl);
+            request.Headers.Add("api-key", _settings.SoraApiKey);
+
+            using HttpResponseMessage response = await _httpClient.SendAsync(request, requestTimeout.Token);
+            string responseContent = await response.Content.ReadAsStringAsync(requestTimeout.Token);
 
             if (!response.IsSuccessStatusCode)
             {

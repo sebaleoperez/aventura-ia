@@ -70,6 +70,7 @@ static string SelectGraphics(string prompt, MenuConfig config)
 
 // Set up DI
 var serviceProvider = new ServiceCollection()
+    .AddSingleton<HttpClient>()
     .AddSingleton<IAiAdventureService, OpenAIService>()
     .BuildServiceProvider();
 
