@@ -55,21 +55,7 @@ public class OpenAIService : IAiAdventureService {
     public async Task<Translations> GetTranslationsAsync(string language) {
         string initialInput = GameHelper.GetTranslationsInput(language);
 
-        List<string> translations = (await GetSingleChatCompletionAsync(initialInput)).Split("\n").ToList();
-
-        return new Translations {
-            Welcome = translations[0],
-            Loading = translations[1],
-            Scenario = translations[2],
-            Rounds = translations[3],
-            Choices = translations[4],
-            Hints = translations[5],
-            Difficulty = translations[6],
-            Graphics = translations[7],
-            ImageError = translations[8],
-            HintMessage = translations[9],
-            NoHints = translations[10]
-        };
+        return GameHelper.ParseTranslationsResponse(await GetSingleChatCompletionAsync(initialInput));
     }
 
     private async Task<string> GetSingleChatCompletionAsync(string input)

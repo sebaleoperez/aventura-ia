@@ -13,7 +13,6 @@ public class Translations {
     public required string HintMessage { get; set; }
     public required string NoHints { get; set; }
 
-    
 }
 
 public sealed class GameRoundResponse
@@ -25,18 +24,62 @@ public sealed class GameRoundResponse
 
 public static class GameHelper {
     public static string GetTranslationsInput(string language) {
-        return @$"I want you to translate the following sentences in {language}, I don't want anything else in the response but the translations.
-        Welcome to the election game!
-        Loading...
-        Introduce the scenario in which you want the game to take place:
-        Introduce the number of rounds:
-        Introduce the number of choices per round:
-        How many available hints ?
-        Introduce the desired difficulty (easy, medium, hard, etc):
-        Choose the desired type of graphics (illustration, realistic, 8 bit, etc):
-        The required image could not be generated.
-        Do you want a hint? If so, type 4. If not, type the option you want to choose:
-        No hints remaining. Write the option you want to choose:";
+        return @$"Translate the UI text values to {language}.
+        Always respond only with a valid JSON object. Do not include markdown, code fences,
+        comments, or extra text outside the JSON. Use this exact shape and keep the same keys:
+        {{
+          ""welcome"": ""Welcome to the election game!"",
+          ""loading"": ""Loading..."",
+          ""scenario"": ""Introduce the scenario in which you want the game to take place:"",
+          ""rounds"": ""Introduce the number of rounds:"",
+          ""choices"": ""Introduce the number of choices per round:"",
+          ""hints"": ""How many available hints ?"",
+          ""difficulty"": ""Introduce the desired difficulty (easy, medium, hard, etc):"",
+          ""graphics"": ""Choose the desired type of graphics (illustration, realistic, 8 bit, etc):"",
+          ""imageError"": ""The required image could not be generated."",
+          ""hintMessage"": ""Do you want a hint? If so, type 4. If not, type the option you want to choose:"",
+          ""noHints"": ""No hints remaining. Write the option you want to choose:""
+        }}";
+    }
+
+    public static Translations ParseTranslationsResponse(string response) {
+        try
+        {
+            var translations = JsonSerializer.Deserialize<Translations>(
+                response,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
+
+            if (translations != null && HasAllTranslations(translations))
+            {
+                return translations;
+            }
+        }
+        catch (JsonException)
+        {
+        }
+
+        string[] lines = response
+            .Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+        if (lines.Length < 11)
+        {
+            throw new InvalidOperationException("The translation response did not include all required values.");
+        }
+
+        return new Translations {
+            Welcome = lines[0],
+            Loading = lines[1],
+            Scenario = lines[2],
+            Rounds = lines[3],
+            Choices = lines[4],
+            Hints = lines[5],
+            Difficulty = lines[6],
+            Graphics = lines[7],
+            ImageError = lines[8],
+            HintMessage = lines[9],
+            NoHints = lines[10]
+        };
     }
 
     public static string GetGameDescription(Game game) {
@@ -103,5 +146,20 @@ public static class GameHelper {
             return response.Split("***")[0];
         }
         return response;
+    }
+
+    private static bool HasAllTranslations(Translations translations)
+    {
+        return !string.IsNullOrWhiteSpace(translations.Welcome)
+            && !string.IsNullOrWhiteSpace(translations.Loading)
+            && !string.IsNullOrWhiteSpace(translations.Scenario)
+            && !string.IsNullOrWhiteSpace(translations.Rounds)
+            && !string.IsNullOrWhiteSpace(translations.Choices)
+            && !string.IsNullOrWhiteSpace(translations.Hints)
+            && !string.IsNullOrWhiteSpace(translations.Difficulty)
+            && !string.IsNullOrWhiteSpace(translations.Graphics)
+            && !string.IsNullOrWhiteSpace(translations.ImageError)
+            && !string.IsNullOrWhiteSpace(translations.HintMessage)
+            && !string.IsNullOrWhiteSpace(translations.NoHints);
     }
 }

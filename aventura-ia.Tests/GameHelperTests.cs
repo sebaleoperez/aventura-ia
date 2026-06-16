@@ -3,6 +3,56 @@ namespace aventura_ia.Tests;
 public class GameHelperTests
 {
     [Fact]
+    public void ParseTranslationsResponse_ParsesJsonResponse()
+    {
+        const string response = """
+        {
+          "welcome": "Bienvenido",
+          "loading": "Cargando...",
+          "scenario": "Escenario:",
+          "rounds": "Rondas:",
+          "choices": "Opciones:",
+          "hints": "Pistas:",
+          "difficulty": "Dificultad:",
+          "graphics": "Graficos:",
+          "imageError": "No se pudo generar la imagen.",
+          "hintMessage": "Quieres una pista?",
+          "noHints": "No quedan pistas."
+        }
+        """;
+
+        Translations result = GameHelper.ParseTranslationsResponse(response);
+
+        Assert.Equal("Bienvenido", result.Welcome);
+        Assert.Equal("Cargando...", result.Loading);
+        Assert.Equal("No quedan pistas.", result.NoHints);
+    }
+
+    [Fact]
+    public void ParseTranslationsResponse_FallsBackToLegacyLineFormat()
+    {
+        const string response = """
+        Welcome
+        Loading
+        Scenario
+        Rounds
+        Choices
+        Hints
+        Difficulty
+        Graphics
+        Image error
+        Hint message
+        No hints
+        """;
+
+        Translations result = GameHelper.ParseTranslationsResponse(response);
+
+        Assert.Equal("Welcome", result.Welcome);
+        Assert.Equal("Hint message", result.HintMessage);
+        Assert.Equal("No hints", result.NoHints);
+    }
+
+    [Fact]
     public void ParseRoundResponse_ParsesJsonResponse()
     {
         const string response = """

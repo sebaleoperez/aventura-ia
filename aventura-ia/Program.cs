@@ -76,52 +76,31 @@ var serviceProvider = new ServiceCollection()
 // Retrieve an instance of IAiAdventureService from the DI container
 var aiAdventureService = serviceProvider.GetRequiredService<IAiAdventureService>();
 
-// Language to use for the game
-string? language;
-bool generateVideo = false;
-bool generateImages = true;
-bool textOnly = false;
+CommandLineOptions options = CommandLineOptions.Parse(args);
 
-// Check if any arguments were passed
-if (args.Length > 0)
+if (options.GenerateVideo)
 {
-    // Check for --video parameter
-    if (args.Contains("--video"))
-    {
-        generateVideo = true;
-        ConsoleHelper.PrintMessage("🎬 Modo de generación de video activado!");
-    }
+    ConsoleHelper.PrintMessage("🎬 Modo de generación de video activado!");
+}
 
-    if (args.Contains("--text-only"))
-    {
-        textOnly = true;
-        generateVideo = false;
-        generateImages = false;
-        ConsoleHelper.PrintMessage("Modo solo texto activado.");
-    }
-    else if (args.Contains("--no-images"))
-    {
-        generateImages = false;
-        ConsoleHelper.PrintMessage("Modo sin imágenes activado.");
-    }
-    
-    // Get language (first non-flag argument)
-    language = args.FirstOrDefault(arg => !arg.StartsWith("--"));
-    
-    if (!string.IsNullOrEmpty(language))
-    {
-        // Print the language
-        ConsoleHelper.PrintMessage($"Selected Language: {language}");
-    }
-    else
-    {
-        // Ask the user to input the language
-        language = ConsoleHelper.ReadData("Insert language:");
-    }
+if (options.TextOnly)
+{
+    ConsoleHelper.PrintMessage("Modo solo texto activado.");
+}
+else if (!options.GenerateImages)
+{
+    ConsoleHelper.PrintMessage("Modo sin imágenes activado.");
+}
+
+// Language to use for the game
+string? language = options.Language;
+
+if (!string.IsNullOrEmpty(language))
+{
+    ConsoleHelper.PrintMessage($"Selected Language: {language}");
 }
 else
 {
-    // Ask the user to input the language
     language = ConsoleHelper.ReadData("Insert language:");
 }
 
@@ -138,13 +117,13 @@ Game currentGame = new Game
     Choices = SelectChoices(translations.Choices, menuConfig),
     Hints = SelectHints(translations.Hints, menuConfig),
     Difficulty = SelectDifficulty(translations.Difficulty, menuConfig),
-    Graphics = generateImages ? SelectGraphics(translations.Graphics, menuConfig) : "text-only",
+    Graphics = options.GenerateImages ? SelectGraphics(translations.Graphics, menuConfig) : "text-only",
 };
 
 ConsoleHelper.PrintMessage(translations.Loading);
 
 // Generar video si se especificó el parámetro --video
-if (!textOnly && generateVideo && !string.IsNullOrEmpty(currentGame.Scenario))
+if (options.GenerateVideo && !string.IsNullOrEmpty(currentGame.Scenario))
 {
     try 
     {
@@ -160,7 +139,7 @@ if (!textOnly && generateVideo && !string.IsNullOrEmpty(currentGame.Scenario))
     }
 }
 
-if (generateImages)
+if (options.GenerateImages)
 {
     try
     {
@@ -215,7 +194,7 @@ while (!currentGame.GameOver)
     GameEngine.ApplyRoundResponse(currentGame, currentRound, parsedResponse);
     currentHint = parsedResponse.Hint;
 
-    if (generateImages)
+    if (options.GenerateImages)
     {
         try
         {
