@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 public class Translations {
     public required string Welcome { get; set; }
     public required string Loading { get; set; }
@@ -12,6 +14,13 @@ public class Translations {
     public required string NoHints { get; set; }
 
     
+}
+
+public sealed class GameRoundResponse
+{
+    public string Story { get; init; } = string.Empty;
+    public string Hint { get; init; } = string.Empty;
+    public bool IsGameOver { get; init; }
 }
 
 public static class GameHelper {
@@ -40,25 +49,56 @@ public static class GameHelper {
         leading to a loss. The difficulty of distinguishing the correct answer should 
         be {game.Difficulty}. In your next response, introduce the scenario and 
         describe the situation. After two line breaks, list the {game.Choices} 
-        options. I will then choose an option, and you will tell me if I won or lost. 
-        If I win, conclude the story. If I lose, include the phrase 'Game Over' 
-        in your response. At the end of each response, give a strong hint to help me 
-        avoid a wrong choice, woven naturally into the story. This hint should begin 
-        with *** so I can easily identify it.";
+        options. I will then choose an option, and you will tell me if I won or lost.
+
+        Always respond only with a valid JSON object. Do not include markdown, code fences,
+        comments, or extra text outside the JSON. Use this exact shape:
+        {{
+          ""story"": ""Narrative text and the available options for the player."",
+          ""hint"": ""A strong hint to help avoid a wrong choice."",
+          ""isGameOver"": false
+        }}
+
+        Set isGameOver to true only when my choice is incorrect and I lose.";
     }
 
-    public static bool YouLose(string response) {
-        return response.Contains("Game Over");
+    public static GameRoundResponse ParseRoundResponse(string response) {
+        try
+        {
+            var parsedResponse = JsonSerializer.Deserialize<GameRoundResponse>(
+                response,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
+
+            if (parsedResponse != null && !string.IsNullOrWhiteSpace(parsedResponse.Story))
+            {
+                return parsedResponse;
+            }
+        }
+        catch (JsonException)
+        {
+        }
+
+        return new GameRoundResponse
+        {
+            Story = getRound(response),
+            Hint = getHint(response),
+            IsGameOver = YouLose(response)
+        };
     }
 
-    public static string getHint(string response) {
+    private static bool YouLose(string response) {
+        return response.Contains("Game Over", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string getHint(string response) {
         if (response.Contains("***")) {
             return response.Split("***")[1];
         }
         return string.Empty;
     }
 
-    public static string getRound(string response) {
+    private static string getRound(string response) {
         if (response.Contains("***")) {
             return response.Split("***")[0];
         }

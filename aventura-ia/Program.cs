@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 // Cargar configuración de menús
 var menuConfig = MenuConfig.LoadFromFile("config/menu-options.json");
@@ -71,15 +70,17 @@ static string SelectGraphics(string prompt, MenuConfig config)
 
 // Set up DI
 var serviceProvider = new ServiceCollection()
-    .AddSingleton<OpenAIService>()
+    .AddSingleton<IAiAdventureService, OpenAIService>()
     .BuildServiceProvider();
 
-// Retrieve an instance of OpenAIService from the DI container
-var openAIService = serviceProvider.GetService<OpenAIService>();
+// Retrieve an instance of IAiAdventureService from the DI container
+var aiAdventureService = serviceProvider.GetRequiredService<IAiAdventureService>();
 
 // Language to use for the game
 string? language;
 bool generateVideo = false;
+bool generateImages = true;
+bool textOnly = false;
 
 // Check if any arguments were passed
 if (args.Length > 0)
@@ -89,6 +90,19 @@ if (args.Length > 0)
     {
         generateVideo = true;
         ConsoleHelper.PrintMessage("🎬 Modo de generación de video activado!");
+    }
+
+    if (args.Contains("--text-only"))
+    {
+        textOnly = true;
+        generateVideo = false;
+        generateImages = false;
+        ConsoleHelper.PrintMessage("Modo solo texto activado.");
+    }
+    else if (args.Contains("--no-images"))
+    {
+        generateImages = false;
+        ConsoleHelper.PrintMessage("Modo sin imágenes activado.");
     }
     
     // Get language (first non-flag argument)
@@ -112,7 +126,7 @@ else
 }
 
 // Get translations for the game
-Translations translations = await openAIService!.GetTranslationsAsync(language!);
+Translations translations = await aiAdventureService.GetTranslationsAsync(language!);
 
 ConsoleHelper.PrintTitle(translations.Welcome);
 
@@ -124,19 +138,17 @@ Game currentGame = new Game
     Choices = SelectChoices(translations.Choices, menuConfig),
     Hints = SelectHints(translations.Hints, menuConfig),
     Difficulty = SelectDifficulty(translations.Difficulty, menuConfig),
-    Graphics = SelectGraphics(translations.Graphics, menuConfig),
+    Graphics = generateImages ? SelectGraphics(translations.Graphics, menuConfig) : "text-only",
 };
-
-currentGame.RemainingHints = currentGame.Hints;
 
 ConsoleHelper.PrintMessage(translations.Loading);
 
 // Generar video si se especificó el parámetro --video
-if (generateVideo && !string.IsNullOrEmpty(currentGame.Scenario))
+if (!textOnly && generateVideo && !string.IsNullOrEmpty(currentGame.Scenario))
 {
     try 
     {
-        string videoUrl = await openAIService.GenerateVideoAsync(currentGame.Scenario);
+        string videoUrl = await aiAdventureService.GenerateVideoAsync(currentGame.Scenario);
         if (!string.IsNullOrEmpty(videoUrl))
         {
             ConsoleHelper.PrintMessage($"🎥 Video del escenario disponible en: {videoUrl}");
@@ -148,25 +160,27 @@ if (generateVideo && !string.IsNullOrEmpty(currentGame.Scenario))
     }
 }
 
-try 
+if (generateImages)
 {
-    currentGame.IntroductionImage = await openAIService.GetImageGenerationsAsync(currentGame.Scenario, currentGame.Graphics);
-    ConsoleHelper.OpenImage(currentGame.IntroductionImage);
+    try
+    {
+        currentGame.IntroductionImage = await aiAdventureService.GetImageGenerationsAsync(currentGame.Scenario, currentGame.Graphics);
+        ConsoleHelper.OpenImage(currentGame.IntroductionImage);
+    }
+    catch {
+        ConsoleHelper.PrintMessage(translations.ImageError);
+    }
 }
-catch {
-    ConsoleHelper.PrintMessage(translations.ImageError);
-}
-
-string response = await openAIService.GetChatCompletionsAsync(GameHelper.GetGameDescription(currentGame));
-currentGame.Introduction = GameHelper.getRound(response);
-string currentHint = GameHelper.getHint(response);
+string response = await aiAdventureService.GetChatCompletionsAsync(GameHelper.GetGameDescription(currentGame));
+GameRoundResponse parsedResponse = GameHelper.ParseRoundResponse(response);
+GameEngine.Start(currentGame, parsedResponse);
+string currentHint = parsedResponse.Hint;
 
 ConsoleHelper.PrintMessage(currentGame.Introduction);
 
 while (!currentGame.GameOver)
 {
-    RoundDetails currentRound = new RoundDetails();
-    currentRound.Hint = currentHint;
+    string? choice;
 
     if (currentGame.RemainingHints > 0)
     {
@@ -174,51 +188,50 @@ while (!currentGame.GameOver)
         if (hintChoice == "4")
         {
             ConsoleHelper.PrintMessage(currentHint);
-            currentGame.RemainingHints--;
+            GameEngine.TryUseHint(currentGame);
 
             // Get the user's choice
-            currentRound.Choice = ConsoleHelper.ReadData(string.Empty);
+            choice = ConsoleHelper.ReadData(string.Empty);
         }
         else {
-            currentRound.Choice = hintChoice;
+            choice = hintChoice;
         }
     }
     else {
         ConsoleHelper.PrintMessage(translations.NoHints);
 
         // Get the user's choice
-        currentRound.Choice = ConsoleHelper.ReadData(string.Empty);
+        choice = ConsoleHelper.ReadData(string.Empty);
     }
+
+    RoundDetails currentRound = GameEngine.CreateRound(choice, currentHint);
 
     ConsoleHelper.Clear();
     ConsoleHelper.PrintMessage(translations.Loading);
 
-    response = await openAIService.GetChatCompletionsAsync(currentRound.Choice);
+    response = await aiAdventureService.GetChatCompletionsAsync(currentRound.Choice);
 
-    currentRound.Response = GameHelper.getRound(response);
-    currentHint = GameHelper.getHint(response);
-    
-    currentGame.GameOver = GameHelper.YouLose(currentRound.Response);
+    parsedResponse = GameHelper.ParseRoundResponse(response);
+    GameEngine.ApplyRoundResponse(currentGame, currentRound, parsedResponse);
+    currentHint = parsedResponse.Hint;
 
-    try
+    if (generateImages)
     {
-        currentRound.Image = await openAIService.GetImageGenerationsAsync(currentRound.Response, currentGame.Graphics);
-        ConsoleHelper.OpenImage(currentRound.Image);
-    }
-    catch {
-        ConsoleHelper.PrintMessage(translations.ImageError);
+        try
+        {
+            currentRound.Image = await aiAdventureService.GetImageGenerationsAsync(currentRound.Response, currentGame.Graphics);
+            ConsoleHelper.OpenImage(currentRound.Image);
+        }
+        catch {
+            ConsoleHelper.PrintMessage(translations.ImageError);
+        }
     }
 
     ConsoleHelper.Clear();
-    if (GameHelper.YouLose(currentRound.Response)) 
+    if (parsedResponse.IsGameOver)
         ConsoleHelper.PrintColoredMessage(currentRound.Response, ConsoleColor.Red);
     else
         ConsoleHelper.PrintColoredMessage(currentRound.Response, ConsoleColor.Green);
 
-    currentGame.RoundDetails.Add(currentRound);
-    if (!currentGame.GameOver)
-    {
-        currentGame.CurrentRound++;
-        currentGame.GameOver = currentGame.CurrentRound >= currentGame.Rounds;
-    }
+    GameEngine.CompleteRound(currentGame, currentRound);
 }

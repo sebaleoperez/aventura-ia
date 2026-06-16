@@ -1,4 +1,6 @@
 
 /aventura-ia/bin
 /aventura-ia/obj
+/aventura-ia.Tests/bin
+/aventura-ia.Tests/obj
 aventura-ia/appsettings.json

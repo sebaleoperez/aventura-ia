@@ -24,8 +24,10 @@ Dicho esto, mi objetivo es expandir el multiverso de la "Aventura IA" a otros ti
 
 # Configuración de los recursos
 
-## Configuración con archivo JSON (Recomendado)
-El proyecto ahora utiliza un archivo `appsettings.json` para la configuración. Crea el archivo en `aventura-ia/appsettings.json`:
+## Configuración
+El proyecto carga configuración en este orden: `appsettings.json` opcional, `appsettings.{DOTNET_ENVIRONMENT}.json` opcional, user-secrets y variables de entorno. Las variables de entorno pisan los valores anteriores.
+
+Para desarrollo local puedes crear `aventura-ia/appsettings.json` usando `appsettings.example.json` como plantilla:
 
 ```json
 {
@@ -38,22 +40,26 @@ El proyecto ahora utiliza un archivo `appsettings.json` para la configuración. 
     "DalleDeploymentId": "tu-deployment-dalle",
     "SoraEndpoint": "https://tu-recurso-sora.cognitiveservices.azure.com/",
     "SoraApiKey": "tu-clave-sora",
-    "SoraDeploymentId": "sora"
+    "SoraDeploymentId": "sora",
+    "ImageGenerationTimeoutSeconds": 120,
+    "VideoRequestTimeoutSeconds": 60
   }
 }
 ```
 
-## Variables de entorno (Alternativa)
-También puedes usar variables de entorno:
-- "AzureOpenAiEndpoint": La URL de tu recurso de Azure Open AI
-- "AzureOpenAiApiKey": La clave de acceso a tu recurso de Azure Open AI
-- "AzureOpenAiDeploymentId": El nombre del deployment de tu modelo generativo de texto
-- "DalleEndpoint": La URL de tu recurso de Azure Open AI donde se implementó DALL-E
-- "DalleApiKey": La clave de acceso a tu recurso de Azure Open AI donde se implementó DALL-E
-- "DalleDeploymentId": Nombre del deployment de DALL-E a utilizar
-- **NUEVO** "SoraEndpoint": La URL de tu recurso de Sora
-- **NUEVO** "SoraApiKey": La clave de acceso a tu recurso de Sora
-- **NUEVO** "SoraDeploymentId": Nombre del deployment de Sora
+Para guardar secretos fuera del archivo local:
+
+```bash
+cd aventura-ia
+dotnet user-secrets set "Settings:AzureOpenAiEndpoint" "https://tu-recurso.openai.azure.com/"
+dotnet user-secrets set "Settings:AzureOpenAiApiKey" "tu-clave-de-api"
+dotnet user-secrets set "Settings:AzureOpenAiDeploymentId" "tu-deployment-gpt"
+dotnet user-secrets set "Settings:DalleEndpoint" "https://tu-recurso-dalle.openai.azure.com/"
+dotnet user-secrets set "Settings:DalleApiKey" "tu-clave-dalle"
+dotnet user-secrets set "Settings:DalleDeploymentId" "tu-deployment-dalle"
+```
+
+La configuración de DALL-E solo es requerida si generas imágenes. Sora solo es requerido si ejecutas con `--video`. También puedes usar variables de entorno con doble guion bajo, por ejemplo `Settings__AzureOpenAiApiKey`, `Settings__DalleApiKey` o `Settings__SoraApiKey`.
 
 ## 🎬 Nueva funcionalidad: Generación de videos con Sora
 
@@ -65,6 +71,12 @@ dotnet run spanish --video
 
 # Solo texto e imágenes (modo tradicional)
 dotnet run spanish
+
+# Solo texto, sin imágenes ni video
+dotnet run spanish --text-only
+
+# Texto sin imágenes, pero permitiendo video si agregas --video
+dotnet run spanish --no-images
 ```
 
 ### Configuración de Sora
@@ -146,6 +158,7 @@ Bienvenido a la Aventura IA
 - ✅ **Multiidioma** con traducciones automáticas
 - ✅ **Sistema de pistas** inteligente
 - ✅ **Generación de videos** con Sora (usando `--video`)
+- ✅ **Modo solo texto** con `--text-only` y modo sin imágenes con `--no-images`
 - ✅ **Configuración por JSON** y variables de entorno
 - ✅ **Interfaz de menús interactiva** con navegación por flechas
 - ✅ **Opciones personalizables** editables desde archivos de configuración
@@ -162,6 +175,18 @@ dotnet run spanish
 ```bash
 cd aventura-ia
 dotnet run spanish --video
+```
+
+## Modo solo texto
+```bash
+cd aventura-ia
+dotnet run spanish --text-only
+```
+
+## Modo sin imágenes
+```bash
+cd aventura-ia
+dotnet run spanish --no-images
 ```
 
 ## Idiomas soportados
@@ -200,7 +225,7 @@ Mainly because it's a test project and because it's easier to implement and test
 That being said, my goal is to expand the "Adventure AI" multiverse to other types of applications, such as web applications, mobile applications, etc. All, of course, developed in .NET.
 
 # Requirements
-- .NET 9.0 installed
+- .NET 10.0 installed
 - An Azure subscription with access to Azure Open AI (see below)
 - Deployments in this subscription of a text generative model like GPT and an image generative model like DALL-E
 - **NEW**: Optionally, access to Sora for video generation (see configuration)
@@ -211,8 +236,10 @@ That being said, my goal is to expand the "Adventure AI" multiverse to other typ
 
 # Resource configuration
 
-## JSON Configuration (Recommended)
-The project now uses an `appsettings.json` file for configuration. Create the file in `aventura-ia/appsettings.json`:
+## Configuration
+The project loads configuration in this order: optional `appsettings.json`, optional `appsettings.{DOTNET_ENVIRONMENT}.json`, user-secrets, and environment variables. Environment variables override previous values.
+
+For local development, you can create `aventura-ia/appsettings.json` using `appsettings.example.json` as a template:
 
 ```json
 {
@@ -225,22 +252,26 @@ The project now uses an `appsettings.json` file for configuration. Create the fi
     "DalleDeploymentId": "your-dalle-deployment",
     "SoraEndpoint": "https://your-sora-resource.cognitiveservices.azure.com/",
     "SoraApiKey": "your-sora-key",
-    "SoraDeploymentId": "sora"
+    "SoraDeploymentId": "sora",
+    "ImageGenerationTimeoutSeconds": 120,
+    "VideoRequestTimeoutSeconds": 60
   }
 }
 ```
 
-## Environment Variables (Alternative)
-You can also use environment variables:
-- "AzureOpenAiEndpoint": The URL of your Azure Open AI resource
-- "AzureOpenAiApiKey": The access key to your Azure Open AI resource
-- "AzureOpenAiDeploymentId": The name of the deployment slot for your text generative model
-- "DalleEndpoint": The URL of your Azure Open AI resource for DALL-E
-- "DalleApiKey": The access key to your Azure Open AI resource for DALL-E
-- "DalleDeploymentId": The name of the deployment slot for your DALL-E
-- **NEW** "SoraEndpoint": The URL of your Sora resource
-- **NEW** "SoraApiKey": The access key to your Sora resource
-- **NEW** "SoraDeploymentId": Name of the Sora deployment
+To keep secrets outside the local file:
+
+```bash
+cd aventura-ia
+dotnet user-secrets set "Settings:AzureOpenAiEndpoint" "https://your-resource.openai.azure.com/"
+dotnet user-secrets set "Settings:AzureOpenAiApiKey" "your-api-key"
+dotnet user-secrets set "Settings:AzureOpenAiDeploymentId" "your-gpt-deployment"
+dotnet user-secrets set "Settings:DalleEndpoint" "https://your-dalle-resource.openai.azure.com/"
+dotnet user-secrets set "Settings:DalleApiKey" "your-dalle-key"
+dotnet user-secrets set "Settings:DalleDeploymentId" "your-dalle-deployment"
+```
+
+DALL-E configuration is required only when generating images. Sora is required only when running with `--video`. You can also use environment variables with double underscores, for example `Settings__AzureOpenAiApiKey`, `Settings__DalleApiKey`, or `Settings__SoraApiKey`.
 
 ## 🎬 New Feature: Video Generation with Sora
 
@@ -319,6 +350,7 @@ Menu options can be customized by editing `aventura-ia/config/menu-options.json`
 - ✅ **Multi-language** with automatic translations
 - ✅ **Intelligent hint system**
 - ✅ **Video generation** with Sora (using `--video`)
+- ✅ **Text-only mode** with `--text-only` and no-image mode with `--no-images`
 - ✅ **JSON configuration** and environment variables
 - ✅ **Interactive menu interface** with arrow key navigation
 - ✅ **Customizable options** editable from configuration files
@@ -335,6 +367,18 @@ dotnet run english
 ```bash
 cd aventura-ia
 dotnet run english --video
+```
+
+## Text-only mode
+```bash
+cd aventura-ia
+dotnet run english --text-only
+```
+
+## No-image mode
+```bash
+cd aventura-ia
+dotnet run english --no-images
 ```
 
 ## Supported Languages
@@ -359,6 +403,3 @@ In this section, I will leave ideas I have for future versions:
 - Customizable themes for console interface
 - Local multiplayer mode
 - Achievement and statistics system
-
-
-

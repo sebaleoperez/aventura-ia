@@ -6,7 +6,7 @@ public class Game
     public UInt16 Choices { get; init; }
     public string? Difficulty { get; init; }
     public string? Graphics { get; init; }
-    public string? Introduction { get; set; }
+    public string Introduction { get; set; } = string.Empty;
     public Uri? IntroductionImage { get; set; }
     public bool GameOver { get; set; } = false;
     public uint CurrentRound { get; set; } = 0;
@@ -19,8 +19,8 @@ public class Game
 public class RoundDetails
 {
     public string? Choice { get; set; }
-    public string? Response { get; set; }
+    public string Response { get; set; } = string.Empty;
     public Uri? Image { get; set; }
 
-    public string? Hint { get; set; }
+    public string Hint { get; set; } = string.Empty;
 }
