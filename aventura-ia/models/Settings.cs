@@ -11,6 +11,9 @@ public sealed class Settings
     public string SoraDeploymentId { get; set; } = string.Empty;
     public int ImageGenerationTimeoutSeconds { get; set; } = 120;
     public int VideoRequestTimeoutSeconds { get; set; } = 60;
+    public bool EnableVideoPolling { get; set; } = false;
+    public int VideoPollingIntervalSeconds { get; set; } = 10;
+    public int VideoPollingTimeoutSeconds { get; set; } = 600;
 
     public void ValidateChat()
     {
@@ -33,6 +36,8 @@ public sealed class Settings
         Require(SoraApiKey, nameof(SoraApiKey));
         Require(SoraDeploymentId, nameof(SoraDeploymentId));
         RequirePositive(VideoRequestTimeoutSeconds, nameof(VideoRequestTimeoutSeconds));
+        RequirePositive(VideoPollingIntervalSeconds, nameof(VideoPollingIntervalSeconds));
+        RequirePositive(VideoPollingTimeoutSeconds, nameof(VideoPollingTimeoutSeconds));
     }
 
     private static void Require(string value, string settingName)

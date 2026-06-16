@@ -42,7 +42,10 @@ Para desarrollo local puedes crear `aventura-ia/appsettings.json` usando `appset
     "SoraApiKey": "tu-clave-sora",
     "SoraDeploymentId": "sora",
     "ImageGenerationTimeoutSeconds": 120,
-    "VideoRequestTimeoutSeconds": 60
+    "VideoRequestTimeoutSeconds": 60,
+    "EnableVideoPolling": false,
+    "VideoPollingIntervalSeconds": 10,
+    "VideoPollingTimeoutSeconds": 600
   }
 }
 ```
@@ -80,7 +83,7 @@ dotnet run spanish --no-images
 ```
 
 ### Configuración de Sora
-Para usar videos, configura las credenciales de Sora en tu `appsettings.json`. Sora está disponible en Azure OpenAI en modo preview.
+Para usar videos, configura las credenciales de Sora en tu `appsettings.json`. Sora está disponible en Azure OpenAI en modo preview. Si quieres que la app espere el resultado del job, usa `EnableVideoPolling: true`; si queda en `false`, se devuelve el Job ID como antes.
 
 ## 🎮 Nueva Interfaz Interactiva
 
@@ -158,6 +161,7 @@ Bienvenido a la Aventura IA
 - ✅ **Multiidioma** con traducciones automáticas
 - ✅ **Sistema de pistas** inteligente
 - ✅ **Generación de videos** con Sora (usando `--video`)
+- ✅ **Polling opcional de jobs de video** con `EnableVideoPolling`
 - ✅ **Modo solo texto** con `--text-only` y modo sin imágenes con `--no-images`
 - ✅ **Configuración por JSON** y variables de entorno
 - ✅ **Interfaz de menús interactiva** con navegación por flechas
@@ -206,7 +210,7 @@ En esta sección dejaré ideas que tengo para próximas versiones:
 - Crear una versión de la aplicación para Android, Windows y iOS con .NET Maui
 - Que el escenario pueda escanearse directo de una imagen
 - Lectura de los relatos en voz alta
-- Sistema de polling para verificar el estado de los videos de Sora
+- ✅ ~~Sistema de polling para verificar el estado de los videos de Sora~~ **¡Completado!**
 - Cacheo local de videos generados
 - Temas personalizables para la interfaz de consola
 - Modo multijugador local
@@ -254,7 +258,10 @@ For local development, you can create `aventura-ia/appsettings.json` using `apps
     "SoraApiKey": "your-sora-key",
     "SoraDeploymentId": "sora",
     "ImageGenerationTimeoutSeconds": 120,
-    "VideoRequestTimeoutSeconds": 60
+    "VideoRequestTimeoutSeconds": 60,
+    "EnableVideoPolling": false,
+    "VideoPollingIntervalSeconds": 10,
+    "VideoPollingTimeoutSeconds": 600
   }
 }
 ```
@@ -286,7 +293,7 @@ dotnet run english
 ```
 
 ### Sora Configuration
-To use videos, configure Sora credentials in your `appsettings.json`. Sora is available in Azure OpenAI in preview mode.
+To use videos, configure Sora credentials in your `appsettings.json`. Sora is available in Azure OpenAI in preview mode. Set `EnableVideoPolling: true` if you want the app to wait for the job result; when it is `false`, the app returns the Job ID as before.
 
 ## 🎮 New Interactive Interface
 
@@ -350,6 +357,7 @@ Menu options can be customized by editing `aventura-ia/config/menu-options.json`
 - ✅ **Multi-language** with automatic translations
 - ✅ **Intelligent hint system**
 - ✅ **Video generation** with Sora (using `--video`)
+- ✅ **Optional video job polling** with `EnableVideoPolling`
 - ✅ **Text-only mode** with `--text-only` and no-image mode with `--no-images`
 - ✅ **JSON configuration** and environment variables
 - ✅ **Interactive menu interface** with arrow key navigation
@@ -398,7 +406,7 @@ In this section, I will leave ideas I have for future versions:
 - Create a version of the application for Android, Windows, and iOS with .NET Maui
 - Allow the scenario to be scanned directly from an image
 - Text-to-speech reading of the stories
-- Polling system to check Sora video status
+- ✅ ~~Polling system to check Sora video status~~ **Completed!**
 - Local caching of generated videos
 - Customizable themes for console interface
 - Local multiplayer mode

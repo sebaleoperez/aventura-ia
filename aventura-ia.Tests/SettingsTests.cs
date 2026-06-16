@@ -40,9 +40,29 @@ public class SettingsTests
             SoraEndpoint = "https://example.openai.azure.com/",
             SoraApiKey = "key",
             SoraDeploymentId = "sora",
-            VideoRequestTimeoutSeconds = 60
+            VideoRequestTimeoutSeconds = 60,
+            VideoPollingIntervalSeconds = 10,
+            VideoPollingTimeoutSeconds = 600
         };
 
         settings.ValidateVideo();
+    }
+
+    [Fact]
+    public void ValidateVideo_ThrowsWhenPollingTimeoutIsInvalid()
+    {
+        var settings = new Settings
+        {
+            SoraEndpoint = "https://example.openai.azure.com/",
+            SoraApiKey = "key",
+            SoraDeploymentId = "sora",
+            VideoRequestTimeoutSeconds = 60,
+            VideoPollingIntervalSeconds = 10,
+            VideoPollingTimeoutSeconds = 0
+        };
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(settings.ValidateVideo);
+
+        Assert.Contains("Settings:VideoPollingTimeoutSeconds", exception.Message);
     }
 }

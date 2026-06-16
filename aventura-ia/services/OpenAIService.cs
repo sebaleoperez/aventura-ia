@@ -3,6 +3,7 @@ using Azure.AI.OpenAI;
 using Microsoft.Extensions.Configuration;
 using OpenAI.Chat;
 using OpenAI.Images;
+using System.Diagnostics;
 using System.Text.Json;
 
 public class OpenAIService : IAiAdventureService {
@@ -120,11 +121,14 @@ public class OpenAIService : IAiAdventureService {
                 if (jsonResponse.TryGetProperty("id", out var jobIdProperty)) {
                     string jobId = jobIdProperty.GetString() ?? "";
                     ConsoleHelper.PrintMessage($"🎬 Job ID: {jobId}");
-                    ConsoleHelper.PrintMessage($"⏳ El video se está procesando. Consulta el estado del job para obtener el resultado.");
-                    
-                    // Aquí podrías implementar polling para verificar el estado del job
-                    // Por ahora, devolvemos el job ID
-                    return jobId;
+
+                    if (!_settings.EnableVideoPolling)
+                    {
+                        ConsoleHelper.PrintMessage($"⏳ El video se está procesando. Consulta el estado del job para obtener el resultado.");
+                        return jobId;
+                    }
+
+                    return await WaitForVideoJobAsync(httpClient, jobId);
                 }
                 
                 ConsoleHelper.PrintMessage($"⚠️ Job creado pero no se pudo extraer el ID");
@@ -153,6 +157,105 @@ public class OpenAIService : IAiAdventureService {
             ConsoleHelper.PrintMessage($"❌ Error generando video: {ex.Message}");
             return string.Empty;
         }
+    }
+
+    private async Task<string> WaitForVideoJobAsync(HttpClient httpClient, string jobId)
+    {
+        string statusUrl = $"{_settings.SoraEndpoint.TrimEnd('/')}/openai/v1/video/generations/jobs/{jobId}?api-version=preview";
+        TimeSpan pollingInterval = TimeSpan.FromSeconds(_settings.VideoPollingIntervalSeconds);
+        TimeSpan pollingTimeout = TimeSpan.FromSeconds(_settings.VideoPollingTimeoutSeconds);
+        Stopwatch stopwatch = Stopwatch.StartNew();
+
+        ConsoleHelper.PrintMessage($"Esperando resultado del video cada {_settings.VideoPollingIntervalSeconds} segundos...");
+
+        while (stopwatch.Elapsed < pollingTimeout)
+        {
+            await Task.Delay(pollingInterval);
+
+            using HttpResponseMessage response = await httpClient.GetAsync(statusUrl);
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ConsoleHelper.PrintMessage($"No se pudo consultar el estado del video: {response.StatusCode}");
+                ConsoleHelper.PrintMessage($"Detalles: {responseContent}");
+                return jobId;
+            }
+
+            JsonElement jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+            string status = GetVideoJobStatus(jsonResponse);
+            ConsoleHelper.PrintMessage($"Estado del video: {status}");
+
+            if (IsCompletedVideoStatus(status))
+            {
+                string? videoUrl = FindFirstStringProperty(jsonResponse, "url", "uri", "video_url", "download_url");
+                return string.IsNullOrWhiteSpace(videoUrl) ? responseContent : videoUrl;
+            }
+
+            if (IsFailedVideoStatus(status))
+            {
+                ConsoleHelper.PrintMessage($"El job de video terminó sin éxito: {responseContent}");
+                return string.Empty;
+            }
+        }
+
+        ConsoleHelper.PrintMessage($"El video no terminó dentro de {_settings.VideoPollingTimeoutSeconds} segundos. Job ID: {jobId}");
+        return jobId;
+    }
+
+    private static string GetVideoJobStatus(JsonElement jsonResponse)
+    {
+        string? status = FindFirstStringProperty(jsonResponse, "status", "state");
+        return string.IsNullOrWhiteSpace(status) ? "unknown" : status;
+    }
+
+    private static bool IsCompletedVideoStatus(string status)
+    {
+        return status.Equals("succeeded", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("completed", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("success", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsFailedVideoStatus(string status)
+    {
+        return status.Equals("failed", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("cancelled", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("canceled", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? FindFirstStringProperty(JsonElement element, params string[] propertyNames)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty property in element.EnumerateObject())
+            {
+                if (property.Value.ValueKind == JsonValueKind.String
+                    && propertyNames.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+                {
+                    return property.Value.GetString();
+                }
+
+                string? nestedValue = FindFirstStringProperty(property.Value, propertyNames);
+                if (!string.IsNullOrWhiteSpace(nestedValue))
+                {
+                    return nestedValue;
+                }
+            }
+        }
+
+        if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in element.EnumerateArray())
+            {
+                string? nestedValue = FindFirstStringProperty(item, propertyNames);
+                if (!string.IsNullOrWhiteSpace(nestedValue))
+                {
+                    return nestedValue;
+                }
+            }
+        }
+
+        return null;
     }
 
     private ImageClient GetImageClient()
