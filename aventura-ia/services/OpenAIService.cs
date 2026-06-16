@@ -1,6 +1,5 @@
 using Azure;
 using Azure.AI.OpenAI;
-using Microsoft.Extensions.Configuration;
 using OpenAI.Chat;
 using OpenAI.Images;
 using System.Diagnostics;
@@ -14,12 +13,9 @@ public class OpenAIService : IAiAdventureService {
     ImageClient? _imageClient;
     readonly List<ChatMessage> _messages = new List<ChatMessage>();
 
-    public OpenAIService(HttpClient httpClient) {
+    public OpenAIService(Settings settings, HttpClient httpClient) {
+        _settings = settings;
         _httpClient = httpClient;
-
-        IConfigurationRoot config = BuildConfiguration();
-        _settings = config.GetSection("Settings").Get<Settings>() ?? new Settings();
-        _settings.ValidateChat();
 
         _client = new AzureOpenAIClient(
             new Uri(_settings.AzureOpenAiEndpoint),
@@ -279,21 +275,5 @@ public class OpenAIService : IAiAdventureService {
 
         _imageClient = dalleClient.GetImageClient(_settings.DalleDeploymentId);
         return _imageClient;
-    }
-
-    private static IConfigurationRoot BuildConfiguration()
-    {
-        string environmentName =
-            Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
-            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
-            ?? "Production";
-
-        return new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: true)
-            .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
-            .AddUserSecrets<OpenAIService>(optional: true)
-            .AddEnvironmentVariables()
-            .Build();
     }
 }
