@@ -127,8 +127,9 @@ ConsoleHelper.PrintMessage(translations.Loading);
 // Generar video si se especificó el parámetro --video
 if (options.GenerateVideo && !string.IsNullOrEmpty(currentGame.Scenario))
 {
-    try 
+    try
     {
+        ConsoleHelper.PrintMessage($"🎬 Generando video con Sora para el escenario: {currentGame.Scenario}");
         string videoUrl = await aiAdventureService.GenerateVideoAsync(currentGame.Scenario);
         if (!string.IsNullOrEmpty(videoUrl))
         {

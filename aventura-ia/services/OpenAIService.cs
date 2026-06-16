@@ -69,91 +69,48 @@ public class OpenAIService : IAiAdventureService {
     }
 
     public async Task<string> GenerateVideoAsync(string scenario) {
-        try {
-            _settings.ValidateVideo();
-            
-            // Crear prompt optimizado para Sora
-            string videoPrompt = $"Create a cinematic video scene of: {scenario}. The scene should be atmospheric, detailed, and immersive, showing the environment and setting in a way that brings the adventure scenario to life.";
-            
-            ConsoleHelper.PrintMessage($"🎬 Generando video con Sora para el escenario: {scenario}");
-            ConsoleHelper.PrintMessage($"📝 Prompt del video: {videoPrompt}");
-            
-            // Crear el payload para la API de Sora según el formato de Azure OpenAI
-            var requestBody = new {
-                model = _settings.SoraDeploymentId,
-                prompt = videoPrompt,
-                height = "1080",
-                width = "1920", // Formato widescreen 16:9
-                n_seconds = "10", // 10 segundos de duración
-                n_variants = "1" // Una variante
-            };
-            
-            string jsonContent = JsonSerializer.Serialize(requestBody);
-            // El Content-Type se configura automáticamente en StringContent
-            var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
-            
-            // Construir la URL del endpoint para Sora
-            string apiUrl = $"{_settings.SoraEndpoint.TrimEnd('/')}/openai/v1/video/generations/jobs?api-version=preview";
-            
-            ConsoleHelper.PrintMessage("Enviando solicitud a Sora...");
+        _settings.ValidateVideo();
 
-            // Enviar la solicitud
-            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(_settings.VideoRequestTimeoutSeconds));
-            using var request = new HttpRequestMessage(HttpMethod.Post, apiUrl)
-            {
-                Content = content
-            };
-            request.Headers.Add("api-key", _settings.SoraApiKey);
+        string videoPrompt = $"Create a cinematic video scene of: {scenario}. The scene should be atmospheric, detailed, and immersive, showing the environment and setting in a way that brings the adventure scenario to life.";
 
-            using HttpResponseMessage response = await _httpClient.SendAsync(request, timeout.Token);
-            
-            if (response.IsSuccessStatusCode) {
-                string responseContent = await response.Content.ReadAsStringAsync(timeout.Token);
-                var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
-                
-                ConsoleHelper.PrintMessage($"✅ Job de video enviado exitosamente!");
-                ConsoleHelper.PrintMessage($"📋 Respuesta completa: {responseContent}");
-                
-                // Extraer el job ID de la respuesta
-                if (jsonResponse.TryGetProperty("id", out var jobIdProperty)) {
-                    string jobId = jobIdProperty.GetString() ?? "";
-                    ConsoleHelper.PrintMessage($"🎬 Job ID: {jobId}");
+        var requestBody = new {
+            model = _settings.SoraDeploymentId,
+            prompt = videoPrompt,
+            height = "1080",
+            width = "1920",
+            n_seconds = "10",
+            n_variants = "1"
+        };
 
-                    if (!_settings.EnableVideoPolling)
-                    {
-                        ConsoleHelper.PrintMessage($"⏳ El video se está procesando. Consulta el estado del job para obtener el resultado.");
-                        return jobId;
-                    }
+        string jsonContent = JsonSerializer.Serialize(requestBody);
+        var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+        string apiUrl = $"{_settings.SoraEndpoint.TrimEnd('/')}/openai/v1/video/generations/jobs?api-version=preview";
 
-                    return await WaitForVideoJobAsync(jobId);
-                }
-                
-                ConsoleHelper.PrintMessage($"⚠️ Job creado pero no se pudo extraer el ID");
-                return responseContent;
-            } else {
-                string errorContent = await response.Content.ReadAsStringAsync(timeout.Token);
-                ConsoleHelper.PrintMessage($"❌ Error en la API de Sora: {response.StatusCode}");
-                ConsoleHelper.PrintMessage($"Detalles: {errorContent}");
-                return string.Empty;
-            }
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(_settings.VideoRequestTimeoutSeconds));
+        using var request = new HttpRequestMessage(HttpMethod.Post, apiUrl)
+        {
+            Content = content
+        };
+        request.Headers.Add("api-key", _settings.SoraApiKey);
+
+        using HttpResponseMessage response = await _httpClient.SendAsync(request, timeout.Token);
+        string responseContent = await response.Content.ReadAsStringAsync(timeout.Token);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"Sora API error ({response.StatusCode}): {responseContent}");
         }
-        catch (HttpRequestException httpEx) {
-            ConsoleHelper.PrintMessage($"❌ Error de conexión con Sora: {httpEx.Message}");
-            ConsoleHelper.PrintMessage($"💡 Verifica que tu endpoint y clave API de Sora sean correctos");
-            return string.Empty;
+
+        var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+
+        if (jsonResponse.TryGetProperty("id", out var jobIdProperty)) {
+            string jobId = jobIdProperty.GetString() ?? "";
+            return _settings.EnableVideoPolling
+                ? await WaitForVideoJobAsync(jobId)
+                : jobId;
         }
-        catch (TaskCanceledException timeoutEx) {
-            ConsoleHelper.PrintMessage($"❌ La solicitud a Sora excedió el tiempo de espera: {timeoutEx.Message}");
-            return string.Empty;
-        }
-        catch (JsonException jsonEx) {
-            ConsoleHelper.PrintMessage($"❌ Error al procesar respuesta JSON: {jsonEx.Message}");
-            return string.Empty;
-        }
-        catch (Exception ex) {
-            ConsoleHelper.PrintMessage($"❌ Error generando video: {ex.Message}");
-            return string.Empty;
-        }
+
+        return responseContent;
     }
 
     private async Task<string> WaitForVideoJobAsync(string jobId)
@@ -162,8 +119,6 @@ public class OpenAIService : IAiAdventureService {
         TimeSpan pollingInterval = TimeSpan.FromSeconds(_settings.VideoPollingIntervalSeconds);
         TimeSpan pollingTimeout = TimeSpan.FromSeconds(_settings.VideoPollingTimeoutSeconds);
         Stopwatch stopwatch = Stopwatch.StartNew();
-
-        ConsoleHelper.PrintMessage($"Esperando resultado del video cada {_settings.VideoPollingIntervalSeconds} segundos...");
 
         while (stopwatch.Elapsed < pollingTimeout)
         {
@@ -178,14 +133,11 @@ public class OpenAIService : IAiAdventureService {
 
             if (!response.IsSuccessStatusCode)
             {
-                ConsoleHelper.PrintMessage($"No se pudo consultar el estado del video: {response.StatusCode}");
-                ConsoleHelper.PrintMessage($"Detalles: {responseContent}");
-                return jobId;
+                throw new InvalidOperationException($"Could not get video job status ({response.StatusCode}): {responseContent}");
             }
 
             JsonElement jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
             string status = GetVideoJobStatus(jsonResponse);
-            ConsoleHelper.PrintMessage($"Estado del video: {status}");
 
             if (IsCompletedVideoStatus(status))
             {
@@ -195,12 +147,10 @@ public class OpenAIService : IAiAdventureService {
 
             if (IsFailedVideoStatus(status))
             {
-                ConsoleHelper.PrintMessage($"El job de video terminó sin éxito: {responseContent}");
-                return string.Empty;
+                throw new InvalidOperationException($"Video job failed: {responseContent}");
             }
         }
 
-        ConsoleHelper.PrintMessage($"El video no terminó dentro de {_settings.VideoPollingTimeoutSeconds} segundos. Job ID: {jobId}");
         return jobId;
     }
 
